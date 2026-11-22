@@ -21,3 +21,11 @@ export async function getBookById(id) {
   await delay();
   return books.find((book) => book.id === id) ?? null;
 }
+
+export async function createBook(data) {
+    await delay();
+    const newBook = { ...data, id: nextId }; // id'yi sunucu verir
+    nextId = nextId + 1;
+    books = [...books, newBook]; // push DEĞİL: yeni dizi oluşturuyoruz
+    return newBook;
+  }
