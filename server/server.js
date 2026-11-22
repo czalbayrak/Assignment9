@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import { getAllBooks } from './booksStore.js';
 
 const PORT = process.env.PORT || 3000;
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN ||'http://localhost:5173'; 
@@ -10,8 +11,9 @@ app.use(cors({origin: CLIENT_ORIGIN}));
 
 app.use(express.json());
 
-app.get('/api/hello', async (req, res) => {
-    res.json({ message: 'Server is running' });
+app.get('/api/books', async (req, res) => {
+    const books = await getAllBooks();
+    res.status(200).json(books);
   });
 
   app.listen(PORT, () => {
