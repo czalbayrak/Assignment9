@@ -1,0 +1,23 @@
+const seedBooks = [
+    { id: 1, title: 'The Hobbit', author: 'J.R.R Tolkien', year:1937, genre: 'fantasy', read: true, rating: 5 },
+    { id: 2, title: '1984', author: 'George Orwell', year: 1949, genre: 'fiction', read: true, rating: 4 },
+    { id: 3, title: 'A Brief History of Time', author: 'Stephen Hawking', year: 1988, genre: 'science', read: false, rating: null },
+    { id: 4, title: 'Sapiens', author: 'Yuval Noah Harari', year: 2011, genre: 'history', read: true, rating: 4 },
+    { id: 5, title: 'Dune', author: 'Frank Herbert', year: 1965, genre: 'fiction', read: false, rating: null },
+    { id: 6, title: 'The Name of the Wind', author: 'Patrick Rothfuss', year: 2007, genre: 'fantasy', read: true, rating: null },
+  ];
+  
+  let books = seedBooks;
+  let nextId = 7;
+
+  const delay = (ms = 50) => new Promise((resolve) => setTimeout(resolve, ms));
+
+export async function getAllBooks() {
+  await delay();
+  return books;
+}
+
+export async function getBookById(id) {
+  await delay();
+  return books.find((book) => book.id === id) ?? null;
+}
