@@ -49,3 +49,14 @@ export function parseId(raw) {
           value: { title: title.trim(), author: author.trim(), year, genre, read, rating },
         };
       }
+      export function mergePatch(existing, body) {
+        if (body === null || typeof body !== 'object' || Array.isArray(body)) {
+          return { error: 'Request body must be a JSON object' };
+        }
+        const allowed = ['title', 'author', 'year', 'genre', 'read', 'rating'];
+        const changes = {};
+        for (const key of allowed) {
+          if (key in body) changes[key] = body[key]; // sadece bilinen alanlar
+        }
+        return validateBook({ ...existing, ...changes });
+      }
