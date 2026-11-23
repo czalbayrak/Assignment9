@@ -139,6 +139,30 @@ app.get('/api/books', async (req, res) => {
     }
     res.status(204).end();
   });
+  app.get('/api/stats', async (req, res) => {
+    const books = await getAllBooks();
+  
+    const readCount = books.filter((b) => b.read).length;
+    const rated = books.filter((b) => b.rating !== null);
+    const averageRating =
+      rated.length === 0
+        ? null
+        : Math.round((rated.reduce((sum, b) => sum + b.rating, 0) / rated.length) * 10) / 10;
+  
+
+    const byGenre = books.reduce(
+      (acc, b) => ({ ...acc, [b.genre]: (acc[b.genre] ?? 0) + 1 }),
+      {}
+    );
+  
+    res.status(200).json({
+      total: books.length,
+      read: readCount,
+      unread: books.length - readCount,
+      averageRating,
+      byGenre,
+    });
+  });
 
   app.listen(PORT, () => {
     console.log(`Server listening on http://localhost:${PORT}`);
