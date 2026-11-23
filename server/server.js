@@ -17,6 +17,39 @@ const app= express();
 app.use(cors({origin: CLIENT_ORIGIN}));
 
 app.use(express.json());
+function applyQuery(books, options) {
+    let result = books;
+  
+    if (options.genre) {
+      result = result.filter((b) => b.genre === options.genre);
+    }
+    if (options.read !== undefined) {
+      result = result.filter((b) => b.read === options.read);
+    }
+    if (options.q) {
+      result = result.filter(
+        (b) =>
+          b.title.toLowerCase().includes(options.q) ||
+          b.author.toLowerCase().includes(options.q)
+      );
+    }
+  
+    const field = options.sort ?? 'id'; 
+    const direction = options.order === 'desc' ? -1 : 1;
+  
+    result = result.toSorted((a, b) => {
+      const x = a[field];
+      const y = b[field];
+      if (x === y) return 0;
+      if (x === null) return 1; 
+      if (y === null) return -1;
+      if (typeof x === 'string') return x.localeCompare(y) * direction;
+      return (x - y) * direction;
+    });
+  
+    const start = (options.page - 1) * options.limit;
+    return result.slice(start, start + options.limit);
+  }
 
 app.get('/api/books', async (req, res) => {
   const { error, value } = validateQuery(req.query);
@@ -24,7 +57,7 @@ app.get('/api/books', async (req, res) => {
     return res.status(400).json({ error });
   }
   const books = await getAllBooks();
-  res.status(200).json(books); // filtreyi 7b'de uygulayacağız
+  res.status(200).json(applyQuery(books,value)); 
 });
 
   app.post('/api/books', async (req, res) => {
