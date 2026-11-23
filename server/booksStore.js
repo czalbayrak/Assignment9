@@ -29,3 +29,16 @@ export async function createBook(data) {
     books = [...books, newBook]; // push DEĞİL: yeni dizi oluşturuyoruz
     return newBook;
   }
+  export async function findDuplicate(title, author, excludeId = null) {
+    await delay();
+    const t = title.trim().toLowerCase();
+    const a = author.trim().toLowerCase();
+    return (
+      books.find(
+        (book) =>
+          book.id !== excludeId &&
+          book.title.toLowerCase() === t &&
+          book.author.toLowerCase() === a
+      ) ?? null
+    );
+  }
