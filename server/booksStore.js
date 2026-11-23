@@ -42,3 +42,11 @@ export async function createBook(data) {
       ) ?? null
     );
   }
+  export async function updateBook(id, data) {
+    await delay();
+    const exists = books.some((book) => book.id === id);
+    if (!exists) return null;
+    const updated = { ...data, id }; // id değişmez
+    books = books.map((book) => (book.id === id ? updated : book)); // yeni dizi
+    return updated;
+  }
