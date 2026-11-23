@@ -50,3 +50,10 @@ export async function createBook(data) {
     books = books.map((book) => (book.id === id ? updated : book)); // yeni dizi
     return updated;
   }
+  export async function deleteBook(id) {
+    await delay();
+    const exists = books.some((book) => book.id === id);
+    if(!exists) return false;
+    books = books.filter((book) => book.id !== id);
+    return true;
+  }

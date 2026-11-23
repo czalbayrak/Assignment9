@@ -1,6 +1,13 @@
 import express from 'express';
 import cors from 'cors';
-import { getAllBooks, getBookById, createBook, findDuplicate, updateBook } from './booksStore.js';
+import {
+  getAllBooks,
+  getBookById,
+  createBook,
+  findDuplicate,
+  updateBook,
+  deleteBook,
+} from './booksStore.js';
 import { parseId, validateBook, mergePatch } from './validate.js';
 
 const PORT = process.env.PORT || 3000;
@@ -90,6 +97,17 @@ app.get('/api/books/:id', async (req, res) => {
   
     const updated = await updateBook(id, value);
     res.status(200).json(updated);
+  });
+  app.delete('/api/books/:id', async (req, res) => {
+    const { error, value: id } = parseId(req.params.id);
+    if (error) {
+      return res.status(400).json({ error });
+    }
+    const deleted = await deleteBook(id);
+    if (!deleted) {
+      return res.status(404).json({ error: `Book with id ${id} not found` });
+    }
+    res.status(204).end();
   });
 
   app.listen(PORT, () => {
