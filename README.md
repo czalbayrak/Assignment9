@@ -361,9 +361,8 @@ Keep-Alive: timeout=5
 
 ## Preflight evidence
 
-![Preflight request](preflight.png)
+I opened the browser's Network tab and clicked "Mark as read" on a book. Before the real `PATCH /api/books/:id` request, the browser sent an `OPTIONS` preflight request to the same URL, because the request uses the PATCH method and a `Content-Type: application/json` header. The preflight response was `204 No Content` with these headers: `Access-Control-Allow-Origin: http://localhost:5173`, `Access-Control-Allow-Methods: GET,HEAD,PUT,PATCH,POST,DELETE` and `Access-Control-Allow-Headers: content-type`. After that, the browser sent the real PATCH request and it returned `200`.
 
-When I clicked "Mark as read", the browser first sent an `OPTIONS` request to `/api/books/[id]` before the `PATCH`, because the request uses the PATCH method and a `Content-Type: application/json` header. The preflight answered `204` with `Access-Control-Allow-Origin: http://localhost:5173`, `Access-Control-Allow-Methods: GET,HEAD,PUT,PATCH,POST,DELETE` and `Access-Control-Allow-Headers: content-type`. After that the browser sent the real PATCH.
 
 ## Reasoning questions
 
@@ -394,4 +393,3 @@ When I clicked "Mark as read", the browser first sent an `OPTIONS` request to `/
 - I ran `npm run dev` from the project root instead of the `server` folder and got an `ENOENT ... package.json` error. I learned that npm commands must run where `package.json` is.
 - I forgot to import `getBookById`, and Express returned an HTML error page with a stack trace. This showed why the JSON error middleware is needed.
 - Another project was using port 5173, so Vite started on 5174 and the browser blocked my requests with a CORS error, because the server only allows `http://localhost:5173`. Stopping the other project fixed it.
-- [Kendi eklemek istediğin başka bir zorluk varsa yaz.]
