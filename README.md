@@ -368,28 +368,29 @@ I opened the browser's Network tab and clicked "Mark as read" on a book. Before 
 
 **1. Parameters.** The id identifies one specific resource, so it belongs in the path: `/api/books/3` is the address of book 3. `genre` and `sort` do not identify a resource; they only filter or order the list at `/api/books`, so they are optional query parameters. If the id were in the query string (`/api/books?id=3`), the URL would look like a filtered list instead of a single resource, and the route could not clearly answer 404 for a missing book.
 
-**2. Body parsing (experiment).** I moved `express.json()` below the routes. [Ne gördüğünü yaz: req.body undefined oldu, POST ... status ve mesaj ile döndü.] This happens because middleware runs in order, so the body was not parsed yet when the route ran.
+**2. Body parsing (experiment).** I moved `express.json()` below the routes. `req.body` was `undefined`, so my validation could not read any fields and the POST returned `400` with `{"error":"Request body must be a JSON object"}`. This happens because middleware runs in order, so the body was not parsed yet when the route ran.
 
-**3. One response (experiment).** I removed the `return` before the 404 in `GET /api/books/:id` and requested id 999. [Ne gördüğünü yaz: client 404 aldı ama sunucu terminalinde "Cannot set headers after they are sent to the client" hatası çıktı.] Without `return` the function continued and tried to send a second response after the first one was already sent.
+**3. One response (experiment).** I removed the `return` before the 404 in `GET /api/books/:id` and requested id 999. curl still received the 404 response, but the server terminal printed the error `Cannot set headers after they are sent to the client`.Without `return` the function continued and tried to send a second response after the first one was already sent.
 
 **4. PUT and PATCH.** PATCH is better when I only want to change one field, for example marking a book as read: I send `{"read": true}` and everything else stays the same. PUT is better when the user edits the whole book in the form and I want to replace all fields at once. In my curl evidence the same `{"rating":4}` body returns 400 with PUT but 200 with PATCH.
 
-**5. CORS (experiment).** I started the server with `CLIENT_ORIGIN=http://localhost:9999`. [Konsolda gördüğün hatayı yaz: "...has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header..."] The server still received and answered the request (status [ne gördüysen] in the Network tab), but the response had no allow header, so the browser refused to give it to my JavaScript. curl still works because CORS is a rule enforced only by browsers; curl does not check these headers.
+**5. CORS (experiment).** I started the server with `CLIENT_ORIGIN=http://localhost:9999`. The page showed my "Cannot reach the server" message and the console showed a CORS error saying the origin `http://localhost:5173` is not allowed by `Access-Control-Allow-Origin`.The server still received and answered the request (status 200 in the Network tab), but the response had no allow header, so the browser refused to give it to my JavaScript. curl still works because CORS is a rule enforced only by browsers; curl does not check these headers.
 
 **6. Validation.** Client-side checks can be bypassed easily: anyone can send a request with curl, Postman or the browser console without using my form. The server is the only place that protects the data, so it must validate every request itself. Some rules, like the duplicate check, can only be done on the server because only it knows all the books.
 
-**7. State (experiment).** After I added a book and restarted the server, [ne gördüğünü yaz: eklediğim kitap kayboldu, liste ilk 6 kitaba döndü]. The data lives only in the server's memory (a JavaScript variable), so it disappears when the process stops. To keep it, the data must be saved in a persistent store such as a database or a file.
+**7. State (experiment).** After I added a book and restarted the server, the book I added was gone and the list was back to the 6 seed books. The data lives only in the server's memory (a JavaScript variable), so it disappears when the process stops. To keep it, the data must be saved in a persistent store such as a database or a file.
 
 ## Self-study notes
 
-- **URLSearchParams:** [kendi cümlelerinle: query string'i güvenli kurar, boşluk ve özel karakterleri otomatik kodlar. getBooks fonksiyonunda kullandım.]
-- **localeCompare:** [metinleri alfabetik karşılaştırır, sort için -1/0/1 döner. Sunucudaki applyQuery'de title/author sıralamasında kullandım. Ayrıca kopyayı sıralamak için toSorted kullandım.]
-- **import.meta.env and VITE_ prefix:** [Vite env değişkenlerini import.meta.env ile verir; sadece VITE_ ile başlayanlar tarayıcıya açılır ki gizli değişkenler sızmasın. .env değişince dev sunucusu yeniden başlatılmalı.]
-- **204 in Express 5:** [res.status(204).end() kullandım; 204'te gövde gönderilmez. Client tarafında 204 gelince response.json() çağırmıyorum.]
-- **AbortController and AbortError:** [useEffect içinde controller oluşturup signal'i fetch'e veriyorum; cleanup'ta abort() çağırıyorum. İptal edilen fetch AbortError fırlatıyor, err.name === 'AbortError' ise hatayı yok sayıyorum.]
+- **URLSearchParams:** I used it in `getBooks` to build the query string. It encodes spaces and special characters automatically, so a search like `the hobbit` becomes `q=the+hobbit` safely. I also skip empty filters so they are not sent.
+- **localeCompare:**`a.localeCompare(b)` returns a negative number, zero or a positive number, which is exactly what a sort comparator needs. I used it for sorting by title and author in `applyQuery`, together with `toSorted`, which sorts a copy and keeps the stored array unchanged.
+- **import.meta.env and VITE_ prefix:** Vite puts environment variables on `import.meta.env`. Only variables that start with `VITE_` are exposed to the browser, so secrets are not leaked by mistake. After changing `.env` I had to restart `npm run dev`.
+- **204 in Express 5:**I used `res.status(204).end()` because a 204 response must not have a body. On the client, my request helper returns `null` for 204 instead of calling `response.json()`, which would fail on an empty body.
+- **AbortController and AbortError:**In `useEffect` I create an `AbortController`, pass its `signal` to `fetch`, and call `abort()` in the cleanup. An aborted fetch rejects with an error whose `name` is `AbortError`; I ignore that error so an old response never overwrites a newer one.
 
 ## Challenges
 
 - I ran `npm run dev` from the project root instead of the `server` folder and got an `ENOENT ... package.json` error. I learned that npm commands must run where `package.json` is.
 - I forgot to import `getBookById`, and Express returned an HTML error page with a stack trace. This showed why the JSON error middleware is needed.
 - Another project was using port 5173, so Vite started on 5174 and the browser blocked my requests with a CORS error, because the server only allows `http://localhost:5173`. Stopping the other project fixed it.
+- My old server was still using port 3000. In Express 5, `app.listen` passes the error to the callback instead of throwing, so the new server printed "listening" and then exited, and my curl requests went to the old server. I found the process with `lsof -i :3000` and stopped it.
